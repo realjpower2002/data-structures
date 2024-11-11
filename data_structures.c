@@ -26,28 +26,23 @@ int handle_head_uninitialized(struct LinkedList* list) {
 
 int add(struct LinkedList* list, void* contents) {
 
-    printf("Adding value\n");
-
-    if(handle_head_uninitialized(list) == 0) {
-        return 0;
-    }
-
     struct Node* prev_node = list->head;
     
     for(int i = 1; i < list->length; i++) {
-        printf("traversing node %d\n",i);
         prev_node = prev_node->next;
     }
 
     struct Node* new_node = malloc(sizeof(struct Node));
     new_node->contents = contents;
 
-    printf("Reassigning old end to new new_node\n");
+    if(prev_node == NULL) {
+        list->head = new_node;
+    }
+    else {
+        prev_node->next = new_node;
+    }
 
-    prev_node->next = new_node;
     list->length++;
-
-    printf("Added value to the list\n");
 
     return 1;
 }
@@ -59,17 +54,13 @@ int insert(struct LinkedList* list, int index, void* contents) {
 
     assertmsg(index >= 0, "Tried to insert into Linked List at negative index.");
 
-    if(handle_head_uninitialized(list) == 0) {
-        return 0;
-    }
-
     // Keep a pointer to the nodes which will come before and
     // after the node that we will insert.
     struct Node* next_node = list->head;
 
     struct Node* prev_node = NULL;
 
-    for(int i = 1; i <= index; i++) {
+    for(int i = 0; i < index; i++) {
         prev_node = next_node;
 
         if(i >= list->length) {
