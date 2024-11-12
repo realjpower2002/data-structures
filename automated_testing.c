@@ -3,7 +3,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-// Brilliant little def provided by Mingye Wang (https://stackoverflow.com/questions/5867834/assert-with-message)
+// Brilliant little def provided by Mingye Wang 
+//     (https://stackoverflow.com/questions/5867834/assert-with-message)
 #define assertmsg(x, msg) assert(((void) msg, x))
 
 void test_create_empty_list() {
