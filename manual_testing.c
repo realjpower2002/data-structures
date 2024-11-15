@@ -152,6 +152,8 @@ int main(int argc, char** argv) {
 
 
     // destroy the list
-    //list->teardown(list, NO_AUTO_FREE);
-    list->teardown(list);
+    list->teardown(list, NO_AUTO_FREE);
+    //list->teardown(list);
+
+    return 0;
 }
