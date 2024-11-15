@@ -67,6 +67,7 @@ int handle_head_uninitialized(struct LinkedList* list) {
 }
 
 
+
 /**
  * @brief Adds a new node with contents "contents" to the end of the list. This
  * contents is a void pointer to some data in memory.
@@ -230,6 +231,7 @@ void* get(struct LinkedList* list, int index) {
 }
 
 
+
 /**
  * @brief Returns the contents, a void pointer, of a the node at the given
  * index. If there is no node at the given index, returns a default value
@@ -261,6 +263,7 @@ void* get_or_default(struct LinkedList* list, int index, void* _default) {
 
     return current_node->contents;
 }
+
 
 
 /**
@@ -327,6 +330,7 @@ int delete(struct LinkedList* list, int index, ...) {
     // Return 1 on success
     return 1;
 }
+
 
 
 /**

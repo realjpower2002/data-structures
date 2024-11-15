@@ -33,6 +33,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+
+
 // A brilliant little def provided by Mingye Wang 
 //     (https://stackoverflow.com/questions/5867834/assert-with-message)
 // (I have modified it somewhat to pretty print error messages)
@@ -81,6 +83,8 @@ struct LinkedList {
 // The standard way a LinkedList is manipulated and traversed
 // is by using pointers with arrow operators.
 typedef struct LinkedList* LinkedList;
+
+
 
 struct Node {
     void* contents;
@@ -143,6 +147,8 @@ int get_num_args(char*);
     \
     list->add(list,copy);\
 })
+
+
 
 #define insert_copy(list, contents, ...) ({\
     int num_va_args = get_num_args(#__VA_ARGS__);\
