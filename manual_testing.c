@@ -3,6 +3,17 @@
 #include <stdlib.h>
 #include <string.h>
 
+int write_beloved_string(LinkedList list) {
+    char str[] = "My Beloved String";
+    list->add(list, str);
+
+    printf("Beloved  : %p\n", str);
+
+    printf("I am so thankful I can store \"%s\" in a list ...\n",list->get(list, list->length-1));
+
+    return 1;
+}
+
 int main(int argc, char** argv) {
     printf("Testing data structures.\n");
 
@@ -94,6 +105,25 @@ int main(int argc, char** argv) {
 
 
 
+    // Demonstrate how stack data vanishes once it leaves scope
+    //
+    // We write a wonderful string at index 2
+    write_beloved_string(list);
+    
+    // Okay, I think gcc has some stack protection to prevent this
+    // from trivially smashing the stack, but the point is that
+    // our beloved string was ruined
+    //
+    // Also, at the end, putting stack data directly into the list
+    // will cause a corruption when we try to free a memory address
+    // that is on the stack
+    char despicable_string[] = "I hate this string!!!!!!!!!!";
+
+    printf("Despised : %p\n", despicable_string);
+    printf("%s ... NOOOOOOO!!!\n", list->get(list, list->length-1));
+
+
+
     // Understandably tired after a long day of complicated pointer stuff
     printf("Man, that was pretty complicated ... I'm tired ...\n");
 
@@ -104,14 +134,24 @@ int main(int argc, char** argv) {
 
 
 
-    // Declare a mysterious stack string ...
-    char* string = "Goobergenius";
-    // Add it using automatic type recognition with gcc typeof()
-    add_copy(list, string,13);
-    
+    // Declare a sensible stack string ...
+    char string[] = "Goobergenius";
+    // Add it using automatic size determination with sizeof()
+    add_copy(list, string);
     // Get the contents of the list @2 as a char array
-    printf("%s ... oh my goodness.\n", get_type(list,2,char*));
+    printf("%s ... oh wow (takes picture).\n", get_type(list,list->length-1,char*));
+
+
+
+    // Declare a mysterious stack string ...
+    char* string_mystery = "Goobergenius ... SIZEOF HAS NO POWER HERE MUAHAHAHA";
+    // Add it using manually supplied memory length
+    add_copy(list, string_mystery, strlen(string_mystery));
+    printf("%s ... but carefully manually managed memory does 😎\n", get_type(list, list->length-1, char*));
+
+
 
     // destroy the list
+    //list->teardown(list, NO_AUTO_FREE);
     list->teardown(list);
 }

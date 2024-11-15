@@ -34,15 +34,6 @@
 #include <stdarg.h>
 
 
-// Brilliant little def provided by Mingye Wang 
-//     (https://stackoverflow.com/questions/5867834/assert-with-message)
-// (I have modified it somewhat to pretty print error messages)
-#define assertf(x, msg, ...)({\
-    if(!(x))\
-        fprintf(stderr, "ASSERT : "msg __VA_OPT__(,) __VA_ARGS__);\
-    assert(x);\
-})
-
 
 /**
  * @brief Handles the case during insertion or addition of node where the head 
@@ -58,7 +49,7 @@
  */
 int handle_head_uninitialized(struct LinkedList* list) {
 
-    assertf(list != NULL, "Tried to allocate head for NULL Linked List.");
+    assertf(list != NULL, "Tried to allocate head for NULL Linked List.\n");
 
     if(list->head == NULL) {
 
@@ -89,7 +80,7 @@ int handle_head_uninitialized(struct LinkedList* list) {
  */
 int add(struct LinkedList* list, void* contents) {
 
-    assertf(list != NULL, "Tried to insert into a NULL Linked List.");
+    assertf(list != NULL, "Tried to insert into a NULL Linked List.\n");
 
     // This Node will traverse through to the end of the list.
     struct Node* prev_node = list->head;
@@ -144,9 +135,9 @@ int add(struct LinkedList* list, void* contents) {
  */
 int insert(struct LinkedList* list, int index, void* contents) {
 
-    assertf(list != NULL, "Tried to insert into a NULL Linked List.");
+    assertf(list != NULL, "Tried to insert into a NULL Linked List.\n");
 
-    assertf(index >= 0, "Tried to insert into Linked List at negative index.");
+    assertf(index >= 0, "Tried to insert into Linked List at negative index.\n");
 
     // Keep a pointer to the nodes which will come before and after the node 
     // that we will insert.
@@ -222,9 +213,9 @@ int insert(struct LinkedList* list, int index, void* contents) {
  * @returns NULL on failure, void* to contents of desired Node on success.
  */
 void* get(struct LinkedList* list, int index) {
-    assertf(list != NULL, "Tried to get data from a NULL Linked List.");
+    assertf(list != NULL, "Tried to get data from a NULL Linked List.\n");
 
-    assertf(index >= 0 && index < list->length, "Tried to get data from Node at invalid index in Linked List.");
+    assertf(index >= 0 && index < list->length, "Tried to get data from Node at invalid index in Linked List.\n");
     
     // We declare a new node, which will traverse the list up to the index
     struct Node* current_node = list->head;
@@ -254,7 +245,7 @@ void* get(struct LinkedList* list, int index) {
  */
 void* get_or_default(struct LinkedList* list, int index, void* _default) {
 
-    assertf(list != NULL, "Tried to get data from a NULL Linked List.");
+    assertf(list != NULL, "Tried to get data from a NULL Linked List.\n");
 
     // Return default if index does not exist
     if(index < 0 || index >= list->length)
@@ -284,7 +275,17 @@ void* get_or_default(struct LinkedList* list, int index, void* _default) {
  * 
  * @returns 0 on failure (index does not exist in list), 1 on success.
  */
-int delete(struct LinkedList* list, int index) {
+int delete(struct LinkedList* list, int index, ...) {
+
+    // Quick check to see if the no auto free is set
+
+    int auto_free = 1; // auto free is true by default
+
+    va_list args;
+    va_start(args, index);
+    if(va_arg(args, long long) == NO_AUTO_FREE) {
+        auto_free = 0;
+    }
 
     // Return 0 if index is out of bounds for the list
     if(index < 0 || index >= list->length)
@@ -314,7 +315,7 @@ int delete(struct LinkedList* list, int index) {
     }
 
     // Free the contents of this node.
-    if(current_node->contents != NULL)
+    if(current_node->contents != NULL && auto_free)
         free(current_node->contents);
 
     // Free current node after unlinking it
@@ -338,7 +339,17 @@ int delete(struct LinkedList* list, int index) {
  * 
  * @returns 1 on success.
  */
-int teardown(struct LinkedList* list) {
+int teardown(struct LinkedList* list, ...) {
+
+    // Quick check to see if the no auto free is set
+
+    int auto_free = 1; // auto free is true by default
+
+    va_list args;
+    va_start(args, list);
+    if(va_arg(args, long long) == NO_AUTO_FREE) {
+        auto_free = 0;
+    }
 
     // Get the length of the list (number of nodes to traverse)
     int length = list->length;
@@ -361,7 +372,7 @@ int teardown(struct LinkedList* list) {
         //     Note, this can result in a double free if there are
         //     two identical pointers in the contents fields of two
         //     nodes in the list !
-        if(previous_node->contents != NULL)
+        if(previous_node->contents != NULL && auto_free)
             free(previous_node->contents);
         
         // Then, free the node
@@ -369,6 +380,8 @@ int teardown(struct LinkedList* list) {
     }
     
     // Free the last node in the list
+    if(current_node->contents != NULL && auto_free)
+        free(current_node->contents);
     free(current_node);
 
     // Return 1 on success
@@ -377,24 +390,25 @@ int teardown(struct LinkedList* list) {
 
 
 
-// This is used for getting the number of bytes passed to any of the copy
+// This is used for getting the number of arguments passed to the copy
 // macros
-int get_passed_bytes(char* va_args, int* num_va_args) {
+int get_num_args(char* macro_va_args) {
+    if(strlen(macro_va_args) == 0) {
+        return 0;
+    }
 
     // If there were arguments passed to one of the macros
-    *num_va_args = 1;
+    int num_macro_va_args = 1;
 
     // We retrieve the number of bytes to allocate (the first argument 
     // passed to the macro)
-    char* num_bytes_arg = strtok(va_args, ",");
+    char* num_bytes_string = strtok(macro_va_args, ",");
     
-    int num_bytes = atoi(num_bytes_arg);
-    
-    if(strtok(NULL, ",") != NULL) {
-        *num_va_args++; // This means we have more than one arg
+    while(strtok(NULL, ",") != NULL) {
+        num_macro_va_args++; // This means we have more than one arg
     }
 
-    return num_bytes;
+    return num_macro_va_args;
 }
 
 

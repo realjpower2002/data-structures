@@ -42,6 +42,8 @@
     assert(x);\
 })
 
+
+
 struct LinkedList {
     // Stores length of list
     int length;
@@ -66,10 +68,14 @@ struct LinkedList {
     void* (*get_or_default)(struct LinkedList*, int, void*);
 
     // Delete a node at a given index from the list.
-    int (*delete)(struct LinkedList*, int);
+    int (*delete)(struct LinkedList*, int, ...);
+
+    // Defines flag variable to contraindicate automatic freeing of data
+    // stored in list during teardown and delete
+    #define NO_AUTO_FREE 0x29167d497c28d39d
 
     // Free the list, all of its nodes, AND ALL OF THEIR CONTENTS.
-    int (*teardown)(struct LinkedList*);
+    int (*teardown)(struct LinkedList*, ...);
 };
 
 // The standard way a LinkedList is manipulated and traversed
@@ -111,23 +117,21 @@ LinkedList createLinkedList();
 
 
 
-// This is used for getting the number of bytes passed to any of the copy
-// macros
-int get_passed_bytes(char*, int*);
+// This is used for getting the number of arguments passed to 
+int get_num_args(char*);
 
 
 
 #define add_copy(list, contents, ...) ({\
-    char va_args[] = {#__VA_ARGS__};\
-    \
-    int num_va_args = 0;\
-    \
-    int num_bytes = get_passed_bytes(va_args, &num_va_args);\
+    int num_va_args = get_num_args(#__VA_ARGS__);\
     \
     assertf(num_va_args <= 1, "Too many arguments (>1) passed to list macro add_copy().\n");\
     \
+    int num_bytes = 0;\
+    \
     if(num_va_args > 0) {\
-        assertf(num_bytes > 0, "Invalid argument (%s) passed to list macro add_copy() for num_bytes (argument 3).\n", va_args);\
+        __VA_OPT__(num_bytes = __VA_ARGS__); /*evaluate and expand the expression here*/\
+        assertf(num_bytes > 0, "Invalid argument \"%s\" (evaluates to %d) passed to list macro add_copy() for num_bytes (argument 3).\n", num_va_args, num_bytes);\
     }\
     \
     else {\
@@ -141,18 +145,15 @@ int get_passed_bytes(char*, int*);
 })
 
 #define insert_copy(list, contents, ...) ({\
-    int num_bytes;\
-    \
-    char va_args[] = {#__VA_ARGS__};\
-    \
-    int num_va_args = 0;\
-    \
-    int num_bytes = get_passed_bytes(va_args, &num_va_args);\
+    int num_va_args = get_num_args(#__VA_ARGS__);\
     \
     assertf(num_va_args <= 1, "Too many arguments (>1) passed to list macro insert_copy().\n");\
     \
+    int num_bytes = 0;\
+    \
     if(num_va_args > 0) {\
-        assertf(num_bytes > 0, "Invalid argument (%s) passed to list macro insert_copy() for num_bytes (argument 3).\n", va_args);\
+        __VA_OPT__(num_bytes = __VA_ARGS__); /*evaluate and expand the expression here*/\
+        assertf(num_bytes > 0, "Invalid argument \"%s\" (evaluates to %d) passed to list macro insert_copy() for num_bytes (argument 3).\n", num_va_args, num_bytes);\
     }\
     \
     else {\
