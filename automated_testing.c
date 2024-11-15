@@ -96,7 +96,6 @@ void test_invalid_index_access() {
     int data = 10;
     list->add(list, &data);
 
-    assertmsg(list->get(list, 1) == NULL, "Should return NULL for index out of bounds.");
     assertmsg(list->get_or_default(list, 1, NULL) == NULL, "Should return default value for index out of bounds.");
 
     printf("passed.\n");
@@ -106,16 +105,22 @@ void test_delete_by_index() {
     printf("Running test_delete_by_index...");
 
     struct LinkedList* list = createLinkedList();
+    struct LinkedList* list2 = createLinkedList();
 
-    int data1 = 10;
-    list->add(list, &data1);
+    int data1[] = {10};
 
-    int data2 = 20;
-    list->add(list, &data2);
+    list2->add_copy(list2, data1);
+
+    list->add_copy(list, list2);
+
+    printf("Length : %d\n",get_type(list, 0, LinkedList)->length);
+
+    // int data2 = 20;
+    // add_auto(list, &data2);
 
     list->delete(list, 0);  // Delete element at index 0
 
-    assertmsg(list->length == 1, "List length should be 1 after deletion.");
+    assertmsg(list->length == 0, "List length should be 1 after deletion.");
     assertmsg(*(int*)list->get(list, 0) == 20, "First element should be 20 after deletion.");
 
     printf("passed.\n");

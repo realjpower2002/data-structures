@@ -62,8 +62,15 @@ int main(int argc, char** argv) {
 
     // Testing a new type of list retrieval (testing if the null return
     // works)
-    if ((my_pointer = list->get(list,2)) != NULL)
+    if ((my_pointer = list->get_or_default(list,2,NULL)) != NULL)
         printf("Another integer is 0x%x.\n",*(unsigned int*)my_pointer);
+
+
+    // Or we could do it the easy (and dirty) way
+    unsigned int* uint_pointer;
+
+    if ((uint_pointer = get_or_default_type(list,1,NULL,unsigned int*)) != NULL)
+        printf("Another integer is 0x%x.\n",*uint_pointer);
 
     printf("Deleting node @ index 2.\n");
 
@@ -98,9 +105,9 @@ int main(int argc, char** argv) {
 
 
     // Declare a mysterious stack string ...
-    char string[] = "Goobergenius";
+    char* string = "Goobergenius";
     // Add it using automatic type recognition with gcc typeof()
-    add_auto(list, string);
+    add_copy(list, string,13);
     
     // Get the contents of the list @2 as a char array
     printf("%s ... oh my goodness.\n", get_type(list,2,char*));
