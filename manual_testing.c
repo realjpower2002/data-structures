@@ -5,7 +5,7 @@
 
 int write_beloved_string(LinkedList list) {
     char str[] = "My Beloved String";
-    list->add(list, str);
+    list->add(list, str, AUTO);
 
     printf("Beloved  : %p\n", str);
 
@@ -35,7 +35,7 @@ int main(int argc, char** argv) {
     *my_integer = 0xdeadbeef;
 
     // Inserting new integer into list at position 0 with internal function
-    list->insert(list,0,my_integer);
+    list->insert(list,0,my_integer,AUTO);
 
 
 
@@ -67,7 +67,7 @@ int main(int argc, char** argv) {
     *new_int = 0xfeedface;
 
     // Adding int to list
-    list->add(list,new_int);
+    list->add(list,new_int,AUTO);
 
 
 
@@ -137,7 +137,7 @@ int main(int argc, char** argv) {
     // Declare a sensible stack string ...
     char string[] = "Goobergenius";
     // Add it using automatic size determination with sizeof()
-    add_copy(list, string);
+    add_copy(list, string, );
     // Get the contents of the list @2 as a char array
     printf("%s ... oh wow (takes picture).\n", get_type(list,list->length-1,char*));
 
@@ -150,6 +150,19 @@ int main(int argc, char** argv) {
     printf("%s ... but carefully manually managed memory does 😎\n", get_type(list, list->length-1, char*));
 
 
+
+    list->add(list, (void*) 420, LITERAL);
+    printf("%d ... the types can be whatever i want ...\n", list->get(list, list->length-1));
+
+
+
+    // Get the number of bytes pointed to by string_mystery
+    printf("Number of bytes in mystery : %d\n", sizeof(get_type(list, list->length-2, char*)));
+    printf("Number of bytes in my log for mystery : %d\n", list->get_data_size(list, list->length-2));
+
+    // Unfortunately, the size information is lost after the cast to void pointer :(
+
+    
 
     // destroy the list
     list->teardown(list, NO_AUTO_FREE);

@@ -53,13 +53,28 @@ struct LinkedList {
     // Stores pointer to head node - the first node in the list
     struct Node* head;
 
-    // Add a new node with contents "contents" to the end of the 
-    // list
-    int (*add)(struct LinkedList*, void*);
+    // Keyword to ignore num_bytes in add and insert (keep as
+    // -1)
+    #define IGNORE -1
 
-    // Insert a new node with contents "contents" into a given
-    // index in the list
-    int (*insert)(struct LinkedList*, int, void*);
+    // Keyword to log num_bytes in add and insert using sizeof
+    #define AUTO -2
+
+    // Keyword arg to write value onto void* instead of
+    // heap memory location
+    #define LITERAL 0 
+
+    // Add a new node with contents "contents" pointing to 
+    // heap memory allocation with num bytes "num_bytes", or
+    // const quad value, to the end of the list. Also has 
+    // optional argument - pointer to stringized type.
+    int (*add)(struct LinkedList*, void*, int);
+
+    // Insert a new node with contents "contents" pointing to 
+    // heap memory allocation with num bytes "num_bytes", or
+    // const quad value, into a given index in the list. Also
+    // has optional argument - pointer to stringized type.
+    int (*insert)(struct LinkedList*, int, void*, int);
 
     // Get a pointer to the contents of a node from its index in 
     // the list (returns NULL on failure)
@@ -69,6 +84,17 @@ struct LinkedList {
     // the list (returns pointer to default data on failure).
     void* (*get_or_default)(struct LinkedList*, int, void*);
 
+    // Get the number of bytes pointed to by the contents pointer
+    // of the Node at a given index in a given list.
+    long (*get_data_size)(struct LinkedList*, int);
+
+    // Sets index in list to be type of given string literal
+    int (*set_stringized_type)(struct LinkedList*, int);
+
+    // Gets pointer to the stringized type token of the data of the node
+    // at a given index in the list
+    char* (*get_stringized_type)(struct LinkedList*, int, char*);
+
     // Delete a node at a given index from the list.
     int (*delete)(struct LinkedList*, int, ...);
 
@@ -76,7 +102,9 @@ struct LinkedList {
     // stored in list during teardown and delete
     #define NO_AUTO_FREE 0x29167d497c28d39d
 
-    // Free the list, all of its nodes, AND ALL OF THEIR CONTENTS.
+    // Free the list, all of its nodes, AND ALL OF THEIR CONTENTS, by
+    // default. Can also use flag value NO_AUTO_FREE to disable automatic
+    // freeing of the Nodes' contents pointers.
     int (*teardown)(struct LinkedList*, ...);
 };
 
@@ -87,7 +115,15 @@ typedef struct LinkedList* LinkedList;
 
 
 struct Node {
+    // The number of bytes that piece of memory is pointing to
+    long num_bytes;
+
+    // A pointer to a part of memory containing data
     void* contents;
+
+    // Stores a string literal - a stringized version of the type
+    // optionally passed into add_copy. Default is NULL.
+    char* type;
 
     struct Node* next;
 };
@@ -103,11 +139,16 @@ typedef struct Node* Node;
 LinkedList createLinkedList();
 
 
-
 // This allows for a pointer with a given type to be obtained
 // from the array and automatically returned with the correct
 // type
-#define get_type(list, index, type)({\
+#define get_type(list, index, type)({
+    #ifdef TYPE_AWARE
+    \
+    assertf(strcmp(list->get_stringized_type(list,index), #type) == 0, "Type \"%s\" of Node %d in list does not match expected type \"%s\".\n", list->get_stringized_type(list,index),index,#type);\
+    
+    #endif\
+    \
     ((type) list->get(list, index));\
 })
 
@@ -115,10 +156,16 @@ LinkedList createLinkedList();
 // from the array and automatically returned with the correct
 // type - or a pointer to a default value to be returned with
 // the correct type.
-#define get_or_default_type(list, index, default, type)({\
+#define get_or_default_type(list, index, default, type)({
+    #ifdef TYPE_AWARE
+    \
+    char* type_string = list->get_stringized_type(list,index);\
+    assertf(type_string == NULL ^ strcmp(type_string, #type) == 0, "Type \"%s\" of Node %d in list does not match expected type \"%s\".\n", list->get_stringized_type(list,index),index,#type);\
+    
+    #endif\
+    \
     ((type) list->get_or_default(list, index, default));\
 })
-
 
 
 // This is used for getting the number of arguments passed to 
@@ -131,45 +178,115 @@ int get_num_args(char*);
     \
     assertf(num_va_args <= 1, "Too many arguments (>1) passed to list macro add_copy().\n");\
     \
-    int num_bytes = 0;\
+    int num_bytes = AUTO;\
     \
-    if(num_va_args > 0) {\
-        __VA_OPT__(num_bytes = __VA_ARGS__); /*evaluate and expand the expression here*/\
-        assertf(num_bytes > 0, "Invalid argument \"%s\" (evaluates to %d) passed to list macro add_copy() for num_bytes (argument 3).\n", num_va_args, num_bytes);\
+    __VA_OPT__(num_bytes = __VA_ARGS__); /*Evaluate and expand the expression here*/\
+    \
+    if(num_bytes == AUTO) {\
+        num_bytes = sizeof(contents); /*Cast to void pointer actually makes it so just putting AUTO here won't work*/\
     }\
     \
-    else {\
-        num_bytes = sizeof(contents);\
-    }\
+    assertf(num_bytes != 0, "Tried to add value literal onto list using list macro add_copy().\n", num_va_args, num_bytes);\
     \
-    void* copy = malloc((unsigned int)num_bytes);\
+    void* copy = malloc(num_bytes);\
     memcpy(copy, contents, num_bytes);\
     \
-    list->add(list,copy);\
+    list->add(list,copy,num_bytes);\
 })
 
 
 
-#define insert_copy(list, contents, ...) ({\
+#define add_copy_type(list, contents, type, ...) ({\
+    int num_va_args = get_num_args(#__VA_ARGS__);\
+    \
+    assertf(num_va_args <= 1, "Too many arguments (>1) passed to list macro add_copy().\n");\
+    \
+    int num_bytes = AUTO;\
+    \
+    __VA_OPT__(num_bytes = __VA_ARGS__); /*Evaluate and expand the expression here*/\
+    \
+    if(num_bytes == AUTO) {\
+        num_bytes = sizeof(contents); /*Cast to void pointer actually makes it so just putting AUTO here won't work*/\
+    }\
+    \
+    assertf(num_bytes != 0, "Tried to add value literal onto list using list macro add_copy().\n", num_va_args, num_bytes);\
+    \
+    void* copy = malloc(num_bytes);\
+    memcpy(copy, contents, num_bytes);\
+    \
+    list->add(list,copy,num_bytes);\
+    list->set_stringized_type(list,list->length-1,#type);\
+})
+
+
+
+#define add_lit(list, literal) ({\
+    list->add(list,(void*)literal,LITERAL)\
+})
+
+
+
+#define add_lit_type(list, literal, type) ({\
+    list->add(list,(void*)literal,LITERAL,#type)\
+    list->set_stringized_type(list,list->length-1,#type);\
+})
+
+
+
+#define insert_copy(list, index, contents, ...) ({\
     int num_va_args = get_num_args(#__VA_ARGS__);\
     \
     assertf(num_va_args <= 1, "Too many arguments (>1) passed to list macro insert_copy().\n");\
     \
-    int num_bytes = 0;\
+    int num_bytes = AUTO;\
     \
-    if(num_va_args > 0) {\
-        __VA_OPT__(num_bytes = __VA_ARGS__); /*evaluate and expand the expression here*/\
-        assertf(num_bytes > 0, "Invalid argument \"%s\" (evaluates to %d) passed to list macro insert_copy() for num_bytes (argument 3).\n", num_va_args, num_bytes);\
+    __VA_OPT__(num_bytes = __VA_ARGS__); /*Evaluate and expand the expression here*/\
+    \
+    if(num_bytes == AUTO) {\
+        num_bytes = sizeof(contents); /*Cast to void pointer actually makes it so just putting AUTO here won't work*/\
     }\
     \
-    else {\
-        num_bytes = sizeof(contents);\
-    }\
-    \
-    void* copy = malloc((unsigned int)num_bytes);\
+    void* copy = malloc(num_bytes);\
     memcpy(copy, contents, num_bytes);\
     \
-    list->add(list,copy);\
+    list->insert(list,index,copy,num_bytes);\
 })
+
+
+
+#define insert_copy_type(list, index, contents, type, ...) ({\
+    int num_va_args = get_num_args(#__VA_ARGS__);\
+    \
+    assertf(num_va_args <= 1, "Too many arguments (>1) passed to list macro insert_copy().\n");\
+    \
+    int num_bytes = AUTO;\
+    \
+    __VA_OPT__(num_bytes = __VA_ARGS__); /*Evaluate and expand the expression here*/\
+    \
+    if(num_bytes == AUTO) {\
+        num_bytes = sizeof(contents); /*Cast to void pointer actually makes it so just putting AUTO here won't work*/\
+    }\
+    \
+    void* copy = malloc(num_bytes);\
+    memcpy(copy, contents, num_bytes);\
+    \
+    list->insert(list,index,copy,num_bytes,#type);\
+    list->set_stringized_type(list,index,#type);\
+})
+
+
+
+#define insert_lit(list, index, literal) ({\
+    list->insert(list,index,(void*)literal,LITERAL);\
+})
+
+
+
+#define insert_lit_type(list, index, literal, type) ({\
+    list->insert(list,index,(void*)literal,LITERAL,#type);\
+    list->set_stringized_type(list,index,#type);\
+})
+
+
 
 #endif

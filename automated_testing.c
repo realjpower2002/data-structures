@@ -38,10 +38,10 @@ void test_insert_at_specific_index() {
     LinkedList list = createLinkedList();
     
     int data1 = 10;
-    list->add(list, &data1);
+    add_copy(list, &data1, 4);
 
     int data2 = 20;
-    list->insert(list, 1, &data2); // Insert at index 1
+    insert_copy(list, 1, &data2, 4); // Insert at index 1
 
     assertf(list->length == 2, "List length should be 2 after insertion.");
     assertf(*(int*)list->get(list, 0) == 10, "First element is incorrect.");
@@ -56,10 +56,10 @@ void test_insert_at_head() {
     LinkedList list = createLinkedList();
 
     int data1 = 10;
-    list->add(list, &data1);  // Adding the first element
+    add_copy(list, &data1, 4);  // Adding the first element
     
     int data2 = 5;
-    list->insert(list, 0, &data2);  // Insert at index 0 (head)
+    insert_copy(list, 0, &data2, 4);  // Insert at index 0 (head)
 
     assertf(list->length == 2, "List length should be 2 after inserting at head.");
     assertf(*get_type(list, 0, int*) == 5, "First element should be 5.");

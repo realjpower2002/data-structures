@@ -84,7 +84,7 @@ int handle_head_uninitialized(struct LinkedList* list) {
  * 
  * @returns 0 on failure (not enough heap to allocate new node), 1 on success.
  */
-int add(struct LinkedList* list, void* contents) {
+int add(struct LinkedList* list, void* contents, int num_bytes) {
 
     assertf(list != NULL, "Tried to insert into a NULL Linked List.\n");
 
@@ -103,7 +103,26 @@ int add(struct LinkedList* list, void* contents) {
     if(new_node == NULL)
         return 0;
 
-    new_node->contents = contents;
+    // Add contents parameter to new node
+    if(num_bytes == IGNORE) {
+        new_node->contents = contents;
+        new_node->num_bytes = IGNORE;
+    }
+    else if(num_bytes == AUTO) {
+        new_node->contents = contents;
+        new_node->num_bytes = sizeof(contents);
+    }
+    else if(num_bytes == LITERAL) {
+        new_node->contents = contents;
+        new_node->num_bytes = LITERAL;
+    }
+    else { // if the number of bytes is a valid integer value
+        new_node->contents = contents;
+        new_node->num_bytes = num_bytes;
+    }
+
+    // For add, default type is NULL when you add from list->add()
+    new_node->type = "";
 
     // If we never traversed any nodes, then prev_node will be NULL.
     // This means that the list is empty.
@@ -139,7 +158,7 @@ int add(struct LinkedList* list, void* contents) {
  * 
  * @returns 0 on failure (not enough heap to allocate new node), 1 on success.
  */
-int insert(struct LinkedList* list, int index, void* contents) {
+int insert(struct LinkedList* list, int index, void* contents, int num_bytes) {
 
     assertf(list != NULL, "Tried to insert into a NULL Linked List.\n");
 
@@ -184,7 +203,27 @@ int insert(struct LinkedList* list, int index, void* contents) {
     if(new_node == NULL)
         return 0;
 
-    new_node->contents = contents;
+    // Add contents parameter to new node
+    if(num_bytes == IGNORE) {
+        new_node->contents = contents;
+        new_node->num_bytes = IGNORE;
+    }
+    else if(num_bytes == AUTO) {
+        new_node->contents = contents;
+        new_node->num_bytes = sizeof(contents);
+    }
+    else if(num_bytes == LITERAL) {
+        new_node->contents = contents;
+        new_node->num_bytes = LITERAL;
+    }
+    else { // if the number of bytes is a valid integer value
+        new_node->contents = contents;
+        new_node->num_bytes = num_bytes;
+    }
+
+    // default list->add has no type information
+    new_node->type = "";
+
     list->length++;
 
     // If we never traversed any nodes, then prev_node will be NULL.
@@ -267,6 +306,116 @@ void* get_or_default(struct LinkedList* list, int index, void* _default) {
     }
 
     return current_node->contents;
+}
+
+
+
+/**
+ * @brief Returns the number of bytes pointed to by the data for a Node
+ * at a given index.
+ * 
+ * @remark This value is not guaranteed to be correct! The user can choose
+ * to not log the amount of bytes stored at given nodes in node->num_bytes,
+ * by using the IGNORE keyword, and the sizeof() operater invoked when using
+ * the AUTO keyword is not always reliable. Be sure to always be scrupulous
+ * when keeping track of memory usage. Also, it is possible for literal values
+ * to be written onto the contents pointer, in which case this function will
+ * return 0 bytes (corresponds to keyword LITERAL).
+ * 
+ * @param list - The list to obtain the number of bytes pointed to by a given
+ * Node's contents void*.
+ * @param index - The index in the list at which the desired Node resides.
+ * 
+ * @returns The value stored in the long at Node->num_bytes. Should be checked
+ * against IGNORE and LITERAL.
+ */
+long get_data_size(struct LinkedList* list, int index) {
+    assertf(list != NULL, "Tried to get num_bytes from a NULL Linked List.\n");
+
+    assertf(index >= 0 && index < list->length, "Tried to get num_bytes from Node at invalid index in Linked List.\n");
+    
+    // We declare a new node, which will traverse the list up to the index
+    struct Node* current_node = list->head;
+
+    // We traverse the list starting from 1 (since we start at the head)
+    for(int i = 1; i <= index; i++) {
+        current_node = current_node->next;
+    }
+
+    // Return num_bytes pointed to by contents of desired node
+    return current_node->num_bytes;
+}
+
+
+
+/**
+ * @brief Returns the stringized literal of the type token optionally passed
+ * into the add() or insert() functions for a node.
+ * 
+ * @remark This function returns NULL if the data field is undeclared. This is
+ * a workaround so that the type is still not a required parameter for the 
+ * add() and insert() functions, but so that the get_or_default_type macro
+ * in type-aware mode can eliminate the type check or not before making its
+ * assertion.
+ * 
+ * @param list - The list to obtain the data type of the desired Node from.
+ * @param index - The index in the list at which the desired Node resides.
+ * 
+ * @returns A stringized version of the type token passed for a value added
+ * or inserted into the list, or NULL if the value's
+ */
+long get_stringized_type(struct LinkedList* list, int index) {
+    assertf(list != NULL, "Tried to get stringized type from a Node in a NULL Linked List.\n");
+
+    assertf(index >= 0 && index < list->length, "Tried to get stringized type from Node at invalid index in Linked List.\n");
+    
+    // We declare a new node, which will traverse the list up to the index
+    struct Node* current_node = list->head;
+
+    // We traverse the list starting from 1 (since we start at the head)
+    for(int i = 1; i <= index; i++) {
+        current_node = current_node->next;
+    }
+
+    // Return num_bytes pointed to by contents of desired node
+    return current_node->num_bytes;
+}
+
+
+
+/**
+ * @brief Sets the type field for the Node at the provided index in the list
+ * to desired string literal.
+ * 
+ * @remark This function returns NULL if the data field is undeclared. This is
+ * a workaround so that the type is still not a required parameter for the 
+ * add() and insert() functions, but so that the get_or_default_type macro
+ * in type-aware mode can eliminate the type check or not before making its
+ * assertion.
+ * 
+ * @param list - The list in which data type of the desired Node.
+ * @param index - The index in the list at which the desired Node resides.
+ * @param type - The stringized version of the 
+ * 
+ * @returns 1 on success, aborts on failure
+ */
+int set_stringized_type(struct LinkedList* list, int index, char* type) {
+    assertf(list != NULL, "Tried to get num_bytes from a NULL Linked List.\n");
+
+    assertf(index >= 0 && index < list->length, "Tried to get num_bytes from Node at invalid index in Linked List.\n");
+    
+    // We declare a new node, which will traverse the list up to the index
+    struct Node* current_node = list->head;
+
+    // We traverse the list starting from 1 (since we start at the head)
+    for(int i = 1; i <= index; i++) {
+        current_node = current_node->next;
+    }
+
+    current_node->type = type;
+
+    // Return 1 on success
+    return 1;
 }
 
 
@@ -441,6 +590,7 @@ LinkedList createLinkedList() {
     list->insert = insert;
     list->get = get;
     list->get_or_default = get_or_default;
+    list->get_data_size = get_data_size;
     list->delete = delete;
     list->teardown = teardown;
 
