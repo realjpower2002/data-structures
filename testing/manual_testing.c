@@ -1,15 +1,15 @@
-#include "data_structures.h"
+#include "../data-structures/data_structures.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-int write_beloved_string(LinkedList list) {
+int write_beloved_string(SinglyLinkedList list) {
     char str[] = "My Beloved String";
-    list->add(list, str, AUTO);
+    list->append(list, str, AUTO, "char*");
 
     printf("Beloved  : %p\n", str);
 
-    printf("I am so thankful I can store \"%s\" in a list ...\n",list->get(list, list->length-1));
+    printf("I am so thankful I can store \"%s\" in a list ...\n",list->get(list, list->length-1, "char*"));
 
     return 1;
 }
@@ -18,7 +18,7 @@ int main(int argc, char** argv) {
     printf("Testing data structures.\n");
 
     // Woooo pointer typedef works !
-    LinkedList list = createLinkedList();
+    SinglyLinkedList list = createSinglyLinkedList();
 
     printf("Created a list.\n");
 
@@ -35,11 +35,11 @@ int main(int argc, char** argv) {
     *my_integer = 0xdeadbeef;
 
     // Inserting new integer into list at position 0 with internal function
-    list->insert(list,0,my_integer,AUTO);
+    list->insert(list,0,my_integer,AUTO,"unsigned int*");
 
 
 
-    void* my_pointer = list->get(list,0);
+    void* my_pointer = list->get(list,0,"unsigned int*");
 
     // Check for if pointer we just inserted is within the bounds of the list
     // (it is)
@@ -49,7 +49,7 @@ int main(int argc, char** argv) {
     }
 
     // Displaying integer we just inserted after retrieving it again
-    printf("Added integer 0x%x\n", *(unsigned int*)list->get(list,0));
+    printf("Added integer 0x%x\n", *(unsigned int*)list->get(list,0,"unsigned int*"));
 
 
 
@@ -66,21 +66,26 @@ int main(int argc, char** argv) {
     // New int contents
     *new_int = 0xfeedface;
 
+
+
     // Adding int to list
-    list->add(list,new_int,AUTO);
+    list->append(list,new_int,AUTO,"unsigned int*");
 
 
 
     // Testing a new type of list retrieval (testing if the null return
     // works)
-    if ((my_pointer = list->get_or_default(list,2,NULL)) != NULL)
+    if ((my_pointer = list->get_or_default(list,2,NULL,"unsigned int*")) != NULL)
         printf("Another integer is 0x%x.\n",*(unsigned int*)my_pointer);
 
 
-    // Or we could do it the easy (and dirty) way
-    unsigned int* uint_pointer;
 
-    if ((uint_pointer = get_or_default_type(list,1,NULL,unsigned int*)) != NULL)
+    // Or we could do it the easy (and dirty) way
+    unsigned int* uint_pointer = get_or_default_type(list,1,NULL,unsigned int*);
+
+    printf("Got here.\n");
+
+    if (uint_pointer != NULL)
         printf("Another integer is 0x%x.\n",*uint_pointer);
 
     printf("Deleting node @ index 2.\n");
@@ -92,14 +97,14 @@ int main(int argc, char** argv) {
 
 
 
-    struct Node* cur = list->head;
+    SLLNode cur = list->head;
 
     printf("Currently %d nodes remain.\n",list->length);
 
 
     // Printing contents of list through manual traversal
     for(int i = 0; i < list->length; i++) {
-        printf("%p\n",cur->contents);
+        printf("%p\n",cur->data);
         cur = cur->next;
     }
 
@@ -120,7 +125,7 @@ int main(int argc, char** argv) {
     char despicable_string[] = "I hate this string!!!!!!!!!!";
 
     printf("Despised : %p\n", despicable_string);
-    printf("%s ... NOOOOOOO!!!\n", list->get(list, list->length-1));
+    printf("%s ... NOOOOOOO!!!\n", list->get(list, list->length-1, "char*"));
 
 
 
@@ -134,10 +139,12 @@ int main(int argc, char** argv) {
 
 
 
+    #define TYPE_AWARE
+
     // Declare a sensible stack string ...
     char string[] = "Goobergenius";
     // Add it using automatic size determination with sizeof()
-    add_copy(list, string, );
+    append_copy(list, string, AUTO, char*);
     // Get the contents of the list @2 as a char array
     printf("%s ... oh wow (takes picture).\n", get_type(list,list->length-1,char*));
 
@@ -146,13 +153,13 @@ int main(int argc, char** argv) {
     // Declare a mysterious stack string ...
     char* string_mystery = "Goobergenius ... SIZEOF HAS NO POWER HERE MUAHAHAHA";
     // Add it using manually supplied memory length
-    add_copy(list, string_mystery, strlen(string_mystery));
+    append_copy(list, string_mystery, strlen(string_mystery), char*);
     printf("%s ... but carefully manually managed memory does 😎\n", get_type(list, list->length-1, char*));
 
 
 
-    list->add(list, (void*) 420, LITERAL);
-    printf("%d ... the types can be whatever i want ...\n", list->get(list, list->length-1));
+    list->append(list, 420, LITERAL, "int");
+    printf("%d ... the types can be whatever i want ...\n", list->get(list, list->length-1, "int"));
 
 
 

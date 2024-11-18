@@ -6,7 +6,7 @@
 void test_create_empty_list() {
     printf("Running test_create_empty_list...");
 
-    LinkedList list = createLinkedList();
+    SinglyLinkedList list = createSinglyLinkedList();
     assertf(list != NULL, "Failed to create an empty list.");
     assertf(list->length == 0, "List length should be 0 on creation.");
     printf("passed.\n");
@@ -17,15 +17,15 @@ void test_create_empty_list() {
 void test_add_to_empty_list() {
     printf("Running test_add_to_empty_list...");
 
-    LinkedList list = createLinkedList();
+    SinglyLinkedList list = createSinglyLinkedList();
     
     int data = 42;
-    add_copy(list, &data, 4);
+    append_copy(list, &data, 4);
 
     // printf("Int at end of list %d\n", *(get_type(list, list->length-1, int*)));
 
     assertf(list->length == 1, "List length should be 1 after adding an element.");
-    assertf(*(int*)list->head->contents == 42, "Added data is not correct.");
+    assertf(*(int*)list->head->data == 42, "Added data is not correct.");
     
     printf("passed.\n");
 
@@ -35,10 +35,10 @@ void test_add_to_empty_list() {
 void test_insert_at_specific_index() {
     printf("Running test_insert_at_specific_index...");
 
-    LinkedList list = createLinkedList();
+    SinglyLinkedList list = createSinglyLinkedList();
     
     int data1 = 10;
-    add_copy(list, &data1, 4);
+    append_copy(list, &data1, 4);
 
     int data2 = 20;
     insert_copy(list, 1, &data2, 4); // Insert at index 1
@@ -53,10 +53,10 @@ void test_insert_at_specific_index() {
 void test_insert_at_head() {
     printf("Running test_insert_at_head...");
 
-    LinkedList list = createLinkedList();
+    SinglyLinkedList list = createSinglyLinkedList();
 
     int data1 = 10;
-    add_copy(list, &data1, 4);  // Adding the first element
+    append_copy(list, &data1, 4);  // Adding the first element
     
     int data2 = 5;
     insert_copy(list, 0, &data2, 4);  // Insert at index 0 (head)
@@ -71,7 +71,7 @@ void test_insert_at_head() {
 void test_insert_at_end() {
     printf("Running test_insert_at_end...");
 
-    LinkedList list = createLinkedList();
+    LinkedList list = createSinglyLinkedList();
 
     int data1 = 10;
     list->add(list, &data1);  // Add first element
@@ -89,7 +89,7 @@ void test_insert_at_end() {
 void test_invalid_index_access() {
     printf("Running test_invalid_index_access...");
 
-    LinkedList list = createLinkedList();
+    LinkedList list = createSinglyLinkedList();
 
     int data = 10;
     list->add(list, &data);
@@ -102,8 +102,8 @@ void test_invalid_index_access() {
 void test_delete_by_index() {
     printf("Running test_delete_by_index...");
 
-    LinkedList list = createLinkedList();
-    LinkedList list2 = createLinkedList();
+    LinkedList list = createSinglyLinkedList();
+    LinkedList list2 = createSinglyLinkedList();
 
     int data1[] = {10};
 
@@ -126,7 +126,7 @@ void test_delete_by_index() {
 void test_delete_last_element() {
     printf("Running test_delete_last_element...");
 
-    LinkedList list = createLinkedList();
+    LinkedList list = createSinglyLinkedList();
 
     int data1 = 10;
     add_copy(list, &data1, 4);
@@ -145,7 +145,7 @@ void test_delete_last_element() {
 void test_teardown() {
     printf("Running test_teardown...");
 
-    LinkedList list = createLinkedList();
+    LinkedList list = createSinglyLinkedList();
 
     int data = 10;
     add_copy(list, &data, 4);

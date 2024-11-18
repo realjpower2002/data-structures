@@ -27,7 +27,7 @@
  */
 
 
-#include "singly_linked_list.h"
+#include "../headers/SinglyLinkedList.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
@@ -52,14 +52,14 @@
  * 
  * @returns 0 on failure (not enough heap to allocate head), 1 on success.
  */
-int handle_head_uninitialized(struct LinkedList* list) {
+int handle_head_uninitialized(struct SinglyLinkedList* list) {
 
     assertf(list != NULL, "Tried to allocate head for NULL Linked List.\n");
 
     if(list->head == NULL) {
 
         // Allocate new space on the heap for the head.
-        list->head = (struct Node*) malloc(sizeof(struct Node));
+        list->head = (struct SLLNode*) malloc(sizeof(struct SLLNode));
 
         if(list->head == NULL) {
             return 0; //couldn't allocate enough heap for the next node.
@@ -74,22 +74,22 @@ int handle_head_uninitialized(struct LinkedList* list) {
 
 
 /**
- * @brief Adds a new node with contents "contents" to the end of the list. This
- * contents is a void pointer to some data in memory.
+ * @brief Appends a new node with contents "contents" to the end of the list. 
+ * This contents is a void pointer to some data in memory.
  * 
  * @remark Also increments the length of the list by 1 on success.
  * 
- * @param list - The list to add the new Node to.
+ * @param list - The list to append the new Node to.
  * @param contents - The contents to include in the node.
  * 
  * @returns 0 on failure (not enough heap to allocate new node), 1 on success.
  */
-int add(struct LinkedList* list, void* contents, int num_bytes) {
+int append(struct SinglyLinkedList* list, void* data, long num_bytes, ...) {
 
     assertf(list != NULL, "Tried to insert into a NULL Linked List.\n");
 
     // This Node will traverse through to the end of the list.
-    struct Node* prev_node = list->head;
+    struct SLLNode* prev_node = list->head;
     
     // Traversing list over [1,length) (since we start at the head).
     for(int i = 1; i < list->length; i++) {
@@ -97,7 +97,7 @@ int add(struct LinkedList* list, void* contents, int num_bytes) {
     }
 
     // Create new node for the data @ contents
-    struct Node* new_node = malloc(sizeof(struct Node));
+    struct SLLNode* new_node = malloc(sizeof(struct SLLNode));
 
     // Check for NULL on malloc (no more space in heap)
     if(new_node == NULL)
@@ -105,24 +105,28 @@ int add(struct LinkedList* list, void* contents, int num_bytes) {
 
     // Add contents parameter to new node
     if(num_bytes == IGNORE) {
-        new_node->contents = contents;
+        new_node->data = data;
         new_node->num_bytes = IGNORE;
     }
     else if(num_bytes == AUTO) {
-        new_node->contents = contents;
-        new_node->num_bytes = sizeof(contents);
+        new_node->data = data;
+        new_node->num_bytes = sizeof(data);
     }
     else if(num_bytes == LITERAL) {
-        new_node->contents = contents;
+        new_node->data = (void*) data;
         new_node->num_bytes = LITERAL;
     }
     else { // if the number of bytes is a valid integer value
-        new_node->contents = contents;
+        new_node->data = data;
         new_node->num_bytes = num_bytes;
     }
 
-    // For add, default type is NULL when you add from list->add()
-    new_node->type = "";
+    // If type awareness is enabled, then also include the type information
+    #ifdef TYPE_AWARE
+    va_list args;
+    va_start(args, num_bytes);
+    new_node->type = va_arg(args, char*);
+    #endif
 
     // If we never traversed any nodes, then prev_node will be NULL.
     // This means that the list is empty.
@@ -158,7 +162,7 @@ int add(struct LinkedList* list, void* contents, int num_bytes) {
  * 
  * @returns 0 on failure (not enough heap to allocate new node), 1 on success.
  */
-int insert(struct LinkedList* list, int index, void* contents, int num_bytes) {
+int insert(struct SinglyLinkedList* list, int index, void* data, long num_bytes, ...) {
 
     assertf(list != NULL, "Tried to insert into a NULL Linked List.\n");
 
@@ -166,9 +170,9 @@ int insert(struct LinkedList* list, int index, void* contents, int num_bytes) {
 
     // Keep a pointer to the nodes which will come before and after the node 
     // that we will insert.
-    struct Node* next_node = list->head;
+    struct SLLNode* next_node = list->head;
 
-    struct Node* prev_node = NULL; // prev_node starts at null because nothing
+    struct SLLNode* prev_node = NULL; // prev_node starts at null because nothing
                                    // is before the head
 
     // Traverses list over [0,index), because prev_node starts from the position
@@ -184,7 +188,7 @@ int insert(struct LinkedList* list, int index, void* contents, int num_bytes) {
 
             // note that the contents for all of these new nodes will
             // be NULL !!!
-            next_node->next = (struct Node*) malloc(sizeof(struct Node));
+            next_node->next = (struct SLLNode*) malloc(sizeof(struct SLLNode));
 
             if(next_node->next == NULL) {
                 return 0; //couldn't allocate enough heap for the next node.
@@ -197,7 +201,7 @@ int insert(struct LinkedList* list, int index, void* contents, int num_bytes) {
     }
  
     // Create new node structure to be inserted into list.
-    struct Node* new_node = (struct Node*) malloc(sizeof(struct Node));
+    struct SLLNode* new_node = (struct SLLNode*) malloc(sizeof(struct SLLNode));
 
     // If malloc returns NULL, there is not enough space left in the heap
     if(new_node == NULL)
@@ -205,24 +209,28 @@ int insert(struct LinkedList* list, int index, void* contents, int num_bytes) {
 
     // Add contents parameter to new node
     if(num_bytes == IGNORE) {
-        new_node->contents = contents;
+        new_node->data = data;
         new_node->num_bytes = IGNORE;
     }
     else if(num_bytes == AUTO) {
-        new_node->contents = contents;
-        new_node->num_bytes = sizeof(contents);
+        new_node->data = data;
+        new_node->num_bytes = sizeof(data);
     }
     else if(num_bytes == LITERAL) {
-        new_node->contents = contents;
+        new_node->data = (void*) data;
         new_node->num_bytes = LITERAL;
     }
     else { // if the number of bytes is a valid integer value
-        new_node->contents = contents;
+        new_node->data = data;
         new_node->num_bytes = num_bytes;
     }
 
-    // default list->add has no type information
-    new_node->type = "";
+    // If type awareness is enabled, then also include the type information
+    #ifdef TYPE_AWARE
+    va_list args;
+    va_start(args, num_bytes);
+    new_node->type = va_arg(args, char*);
+    #endif
 
     list->length++;
 
@@ -245,6 +253,32 @@ int insert(struct LinkedList* list, int index, void* contents, int num_bytes) {
 
 
 
+// Notice, we only check ASCII on failure. This makes it so, while the program
+// is running properly, we only loop through the type string once to inform
+// the user of a type mismatch and debugging information.
+char* getTypeErrorString(char* output, char* actual_type, char* expected_type,
+                         int index) {
+    char* actual_unassigned = !IS_ASCII(actual_type) ? "(not printable - type "
+                                                      "was likely not "
+                                                      "provided when inserting "
+                                                      "data into list)" : 
+                                                      "";
+
+    char* expected_unassigned = !IS_ASCII(expected_type) ? "(not printable - type "
+                                                      "was likely not provided "
+                                                      "when retrieving data "
+                                                      "from list)" : 
+                                                      "";
+
+    sprintf(output,"Type check failed - tried to read \"%s\" %s at index %d in "
+    "Singly Linked List as \"%s\" %s.\n", actual_type, actual_unassigned,
+    index, expected_type, expected_unassigned);
+
+    return output; 
+}
+
+
+
 /**
  * @brief Returns the contents, a void pointer, of a the node at the given
  * index.
@@ -257,21 +291,32 @@ int insert(struct LinkedList* list, int index, void* contents, int num_bytes) {
  * 
  * @returns NULL on failure, void* to contents of desired Node on success.
  */
-void* get(struct LinkedList* list, int index) {
+void* get(struct SinglyLinkedList* list, int index, ...) {
     assertf(list != NULL, "Tried to get data from a NULL Linked List.\n");
 
     assertf(index >= 0 && index < list->length, "Tried to get data from Node at invalid index in Linked List.\n");
     
     // We declare a new node, which will traverse the list up to the index
-    struct Node* current_node = list->head;
+    struct SLLNode* current_node = list->head;
 
     // We traverse the list starting from 1 (since we start at the head)
     for(int i = 1; i <= index; i++) {
         current_node = current_node->next;
     }
 
+    #ifdef TYPE_AWARE
+    va_list args;
+    va_start(args, index);
+    char* expected = va_arg(args, char*);
+    if(current_node->type != expected) {
+        char* error = getTypeErrorString(error, current_node->type, expected,
+                                        index);
+        assertf(current_node->type == expected, "%s", error);
+    }
+    #endif
+
     // Return contents of desired node
-    return current_node->contents;
+    return current_node->data;
 }
 
 
@@ -289,7 +334,7 @@ void* get(struct LinkedList* list, int index) {
  * @returns A void pointer to the contents of the node at the desired index in 
  * the list, default otherwise.
  */
-void* get_or_default(struct LinkedList* list, int index, void* _default) {
+void* get_or_default(struct SinglyLinkedList* list, int index, void* _default, ...) {
 
     assertf(list != NULL, "Tried to get data from a NULL Linked List.\n");
 
@@ -298,14 +343,32 @@ void* get_or_default(struct LinkedList* list, int index, void* _default) {
         return _default;
 
     // Declare new node to traverse list
-    struct Node* current_node = list->head;
+    struct SLLNode* current_node = list->head;
 
     // Traverse list starting at 1 (since we start at the head)
     for(int i = 1; i <= index; i++) {
         current_node = current_node->next;
     }
 
-    return current_node->contents;
+    printf("Got here.\n");
+
+    #ifdef TYPE_AWARE
+    va_list args;
+    va_start(args, _default);
+    char* expected = va_arg(args, char*);
+    printf("Got here.\n");
+    if(current_node->data == NULL || current_node->type == expected) {
+        printf("Got here.\n");
+        char* error = getTypeErrorString(error, current_node->type, expected,
+                                        index);
+        printf("Got here.\n");
+        printf("Types : %s, %s\n", current_node->type, expected);
+        printf("%s",error);
+        assertf(current_node->type == expected, "%s", error);
+    }
+    #endif
+
+    return current_node->data;
 }
 
 
@@ -329,13 +392,13 @@ void* get_or_default(struct LinkedList* list, int index, void* _default) {
  * @returns The value stored in the long at Node->num_bytes. Should be checked
  * against IGNORE and LITERAL.
  */
-long get_data_size(struct LinkedList* list, int index) {
+long get_data_size(struct SinglyLinkedList* list, int index) {
     assertf(list != NULL, "Tried to get num_bytes from a NULL Linked List.\n");
 
     assertf(index >= 0 && index < list->length, "Tried to get num_bytes from Node at invalid index in Linked List.\n");
     
     // We declare a new node, which will traverse the list up to the index
-    struct Node* current_node = list->head;
+    struct SLLNode* current_node = list->head;
 
     // We traverse the list starting from 1 (since we start at the head)
     for(int i = 1; i <= index; i++) {
@@ -344,78 +407,6 @@ long get_data_size(struct LinkedList* list, int index) {
 
     // Return num_bytes pointed to by contents of desired node
     return current_node->num_bytes;
-}
-
-
-
-/**
- * @brief Returns the stringized literal of the type token optionally passed
- * into the add() or insert() functions for a node.
- * 
- * @remark This function returns NULL if the data field is undeclared. This is
- * a workaround so that the type is still not a required parameter for the 
- * add() and insert() functions, but so that the get_or_default_type macro
- * in type-aware mode can eliminate the type check or not before making its
- * assertion.
- * 
- * @param list - The list to obtain the data type of the desired Node from.
- * @param index - The index in the list at which the desired Node resides.
- * 
- * @returns A stringized version of the type token passed for a value added
- * or inserted into the list, or NULL if the value's
- */
-long get_stringized_type(struct LinkedList* list, int index) {
-    assertf(list != NULL, "Tried to get stringized type from a Node in a NULL Linked List.\n");
-
-    assertf(index >= 0 && index < list->length, "Tried to get stringized type from Node at invalid index in Linked List.\n");
-    
-    // We declare a new node, which will traverse the list up to the index
-    struct Node* current_node = list->head;
-
-    // We traverse the list starting from 1 (since we start at the head)
-    for(int i = 1; i <= index; i++) {
-        current_node = current_node->next;
-    }
-
-    // Return num_bytes pointed to by contents of desired node
-    return current_node->num_bytes;
-}
-
-
-
-/**
- * @brief Sets the type field for the Node at the provided index in the list
- * to desired string literal.
- * 
- * @remark This function returns NULL if the data field is undeclared. This is
- * a workaround so that the type is still not a required parameter for the 
- * add() and insert() functions, but so that the get_or_default_type macro
- * in type-aware mode can eliminate the type check or not before making its
- * assertion.
- * 
- * @param list - The list in which data type of the desired Node.
- * @param index - The index in the list at which the desired Node resides.
- * @param type - The stringized version of the 
- * 
- * @returns 1 on success, aborts on failure
- */
-int set_stringized_type(struct LinkedList* list, int index, char* type) {
-    assertf(list != NULL, "Tried to get num_bytes from a NULL Linked List.\n");
-
-    assertf(index >= 0 && index < list->length, "Tried to get num_bytes from Node at invalid index in Linked List.\n");
-    
-    // We declare a new node, which will traverse the list up to the index
-    struct Node* current_node = list->head;
-
-    // We traverse the list starting from 1 (since we start at the head)
-    for(int i = 1; i <= index; i++) {
-        current_node = current_node->next;
-    }
-
-    current_node->type = type;
-
-    // Return 1 on success
-    return 1;
 }
 
 
@@ -432,7 +423,7 @@ int set_stringized_type(struct LinkedList* list, int index, char* type) {
  * 
  * @returns 0 on failure (index does not exist in list), 1 on success.
  */
-int delete(struct LinkedList* list, int index, ...) {
+int delete(struct SinglyLinkedList* list, int index, ...) {
 
     // Quick check to see if the no auto free is set
 
@@ -450,9 +441,9 @@ int delete(struct LinkedList* list, int index, ...) {
 
     // Current node will be the one we want to remove. We keep previous to
     // eventually link around current.
-    struct Node* current_node = list->head;
+    struct SLLNode* current_node = list->head;
 
-    struct Node* previous_node = NULL;
+    struct SLLNode* previous_node = NULL;
 
     // Traverse list starting from 1 (current_node starts at the head, and
     // current_node is the one that we will eventually delete)
@@ -472,8 +463,8 @@ int delete(struct LinkedList* list, int index, ...) {
     }
 
     // Free the contents of this node.
-    if(current_node->contents != NULL && auto_free)
-        free(current_node->contents);
+    if(current_node->data != NULL && auto_free)
+        free(current_node->data);
 
     // Free current node after unlinking it
     free(current_node);
@@ -497,7 +488,7 @@ int delete(struct LinkedList* list, int index, ...) {
  * 
  * @returns 1 on success.
  */
-int teardown(struct LinkedList* list, ...) {
+int teardown(struct SinglyLinkedList* list, ...) {
 
     // Quick check to see if the no auto free is set
 
@@ -513,8 +504,8 @@ int teardown(struct LinkedList* list, ...) {
     int length = list->length;
 
     // Traverse list starting from head
-    struct Node* current_node = list->head;
-    struct Node* previous_node = NULL;
+    struct SLLNode* current_node = list->head;
+    struct SLLNode* previous_node = NULL;
 
     // Free the list itself
     free(list);
@@ -530,8 +521,8 @@ int teardown(struct LinkedList* list, ...) {
         //     Note, this can result in a double free if there are
         //     two identical pointers in the contents fields of two
         //     nodes in the list !
-        if(previous_node->contents != NULL && auto_free)
-            free(previous_node->contents);
+        if(previous_node->data != NULL && auto_free)
+            free(previous_node->data);
         
         // Then, free the node
         free(previous_node);
@@ -541,8 +532,8 @@ int teardown(struct LinkedList* list, ...) {
     //
     // (The only case where current_node is NULL is if we have an empty list).
     if(current_node != NULL) {
-        if(current_node->contents != NULL && auto_free) {
-            free(current_node->contents);
+        if(current_node->data != NULL && auto_free) {
+            free(current_node->data);
         }
         free(current_node);
     }
@@ -553,26 +544,40 @@ int teardown(struct LinkedList* list, ...) {
 
 
 
-// This is used for getting the number of arguments passed to the copy
-// macros
-int get_num_args(char* macro_va_args) {
-    if(strlen(macro_va_args) == 0) {
-        return 0;
-    }
+#ifdef TYPE_AWARE
+/**
+ * @brief Returns the stringized literal of the type token optionally passed
+ * into the append() or insert() functions for a node.
+ * 
+ * @remark This function returns NULL if the data field is undeclared. This is
+ * a workaround so that the type is still not a required parameter for the 
+ * append() and insert() functions, but so that the get_or_default_type macro
+ * in type-aware mode can eliminate the type check or not before making its
+ * assertion.
+ * 
+ * @param list - The list to obtain the data type of the desired Node from.
+ * @param index - The index in the list at which the desired Node resides.
+ * 
+ * @returns A stringized version of the type token passed for a value appended
+ * or inserted into the list, or NULL if the value's
+ */
+long get_stringized_type(struct SinglyLinkedList* list, int index) {
+    assertf(list != NULL, "Tried to get stringized type from a Node in a NULL Linked List.\n");
 
-    // If there were arguments passed to one of the macros
-    int num_macro_va_args = 1;
-
-    // We retrieve the number of bytes to allocate (the first argument 
-    // passed to the macro)
-    char* num_bytes_string = strtok(macro_va_args, ",");
+    assertf(index >= 0 && index < list->length, "Tried to get stringized type from Node at invalid index in Linked List.\n");
     
-    while(strtok(NULL, ",") != NULL) {
-        num_macro_va_args++; // This means we have more than one arg
+    // We declare a new node, which will traverse the list up to the index
+    struct SLLNode* current_node = list->head;
+
+    // We traverse the list starting from 1 (since we start at the head)
+    for(int i = 1; i <= index; i++) {
+        current_node = current_node->next;
     }
 
-    return num_macro_va_args;
+    // Return num_bytes pointed to by contents of desired node
+    return current_node->num_bytes;
 }
+#endif
 
 
 
@@ -582,11 +587,11 @@ int get_num_args(char* macro_va_args) {
  * 
  * @returns New LinkedList with 0 length and default function pointers.
  */
-LinkedList createLinkedList() {
-    LinkedList list = (LinkedList) malloc(sizeof(struct LinkedList));
+SinglyLinkedList createSinglyLinkedList() {
+    SinglyLinkedList list = (SinglyLinkedList) malloc(sizeof(struct SinglyLinkedList));
 
     list->length = 0;
-    list->add = add;
+    list->append = append;
     list->insert = insert;
     list->get = get;
     list->get_or_default = get_or_default;
