@@ -270,6 +270,9 @@ char* getTypeErrorString(char* output, char* actual_type, char* expected_type,
                                                       "from list)" : 
                                                       "";
 
+    // TODO : Add messages for if strings are empty or identical
+    if(strcmp(expected_unassigned))
+
     sprintf(output,"Type check failed - tried to read \"%s\" %s at index %d in "
     "Singly Linked List as \"%s\" %s.\n", actual_type, actual_unassigned,
     index, expected_type, expected_unassigned);
