@@ -1,0 +1,76 @@
+The default Singly Linked List is a struct with a pointer to a head, 
+and a set of function pointers to do operations on the list members :
+
+-get
+-insert
+-add
+
+
+The standard list takes in
+get(list, index)
+
+to simply return a pointer to the desired contents
+
+
+
+insert(list, index, contents, size) or add(list, contents, size)
+
+to add an element to the list at a given position
+with a pointer to contents
+
+AUTO, IGNORE, and LITERAL are also supplied if the
+user desires more granular control over memory
+supplied to an allocation in a list
+
+type_safe_singly_linked_list is a type safe version of
+the list, which uses explicitly provided string literals
+and stringized parameters from defines to provide type
+checking at runtime.
+	-this linked list includes and wraps the functions
+	 of singly_linked_list.h to also include the type
+	 information.
+	 -example : 
+	 	type_safe_add(list,contents,size,type) = add(list,contents,size) 
+	 	
+//in the get type, we will pass the stringized type through to the
+//internal type-aware get function, which will fire an assertion
+//if the type is incorrect or was not passed.
+
+//add macro can (optionally) take in a type to extend its usage to
+//the type-aware lists.
+//	the append and insert copy macros will pass through all provided arguments
+//	to the functions that they wrap.
+//	the order of arguments is also now standard between lists, and lists which
+//	do not need type information (require fewer arguments), have ... at the end
+//	so that they can 
+//
+//	nvm, yeah, type is optional in the macro and if you pass it into a typeless list, itll
+//	just crash the program. so don't do that.
+//
+//	
+
+// If you put SAFE_ underneath a function, it will call the function for getting t
+
+
+
+
+whenever you call get, GoD, insert, or append on a safe list, i want it to do the type
+check / insert 
+
+is there a way to insert a type check around an append, insert, get, or GoD with a define?
+
+for each data type, we can define a way for storing and accessing the type information,
+which is a pointer to a read-only string literal stored alongside the data. this Must
+be unique for each data structure we define, because data is stored different ways in
+different objects
+
+-note to self : for the avl tree, we will have to store the data according to where it
+is in virtual memory. no other way will really make any sense. in a list, we need to
+be able to acces via chronological order of insertion, but there is no way to really
+determine which information is which in a heap or avl tree (unless we literally, so 
+kept track of chronological order separately which would be dumb). we will have to insert
+the data based on the uint64 value of the pointer (will also hopefully be a little more
+random)
+-nvm, maybe a better way is to randomly generate a flag and then insert. keeps it closer
+to log time with less rotations
+
