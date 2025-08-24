@@ -172,8 +172,8 @@ int insert(struct SinglyLinkedList* list, int index, void* data, long num_bytes,
     // that we will insert.
     struct SLLNode* next_node = list->head;
 
-    struct SLLNode* prev_node = NULL; // prev_node starts at null because nothing
-                                   // is before the head
+    // prev_node starts at null because nothing is before the head
+    struct SLLNode* prev_node = NULL;
 
     // Traverses list over [0,index), because prev_node starts from the position
     // 0, before the head of the list.
@@ -220,7 +220,8 @@ int insert(struct SinglyLinkedList* list, int index, void* data, long num_bytes,
         new_node->data = (void*) data;
         new_node->num_bytes = LITERAL;
     }
-    else { // if the number of bytes is a valid integer value
+    else { 
+        // if the number of bytes is a valid integer value
         new_node->data = data;
         new_node->num_bytes = num_bytes;
     }
@@ -270,12 +271,21 @@ char* getTypeErrorString(char* output, char* actual_type, char* expected_type,
                                                       "from list)" : 
                                                       "";
 
-    // TODO : Add messages for if strings are empty or identical
-    if(strcmp(expected_unassigned))
+    puts("Got here (GetTypeErrorString)\n");
 
     sprintf(output,"Type check failed - tried to read \"%s\" %s at index %d in "
-    "Singly Linked List as \"%s\" %s.\n", actual_type, actual_unassigned,
+    "Singly Linked List as \"%s\" %s.", actual_type, actual_unassigned,
     index, expected_type, expected_unassigned);
+
+    if(!strcmp(actual_unassigned, expected_unassigned)) {
+        sprintf(output, "%s The type strings are identical. The type system "
+        "works using string literals. Do not attempt to use a stack or heap "
+        "string to specify the type!", output);
+    }
+
+    puts("Got here!");
+
+    puts(output);
 
     return output; 
 }
@@ -430,7 +440,8 @@ int delete(struct SinglyLinkedList* list, int index, ...) {
 
     // Quick check to see if the no auto free is set
 
-    int auto_free = 1; // auto free is true by default
+    // auto free is true by default
+    int auto_free = 1;
 
     va_list args;
     va_start(args, index);
@@ -495,7 +506,8 @@ int teardown(struct SinglyLinkedList* list, ...) {
 
     // Quick check to see if the no auto free is set
 
-    int auto_free = 1; // auto free is true by default
+    // auto free is true by default
+    int auto_free = 1;
 
     va_list args;
     va_start(args, list);

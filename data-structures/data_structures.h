@@ -11,7 +11,6 @@
 
 // Checks if a given string literal is in the ascii range - this is
 // useful for detecting if a type was not supplied.
-#include <string.h>
 #define IS_ASCII(type_str) ({\
     int is_ascii = 1;\
     for(int i = 0; i < strlen(type_str); i++) {\
@@ -24,8 +23,7 @@
     is_ascii;\
 })
 
-// Define used to indicate optional type 
-// safety
+// Define used to indicate optional type safety
 #define TYPE_AWARE
 
 
